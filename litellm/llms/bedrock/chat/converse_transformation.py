@@ -449,9 +449,13 @@ class AmazonConverseConfig(BaseConfig):
             optional_params.update(reasoning_config)
         else:
             # Anthropic and other models: convert to thinking parameter
-            optional_params["thinking"] = AnthropicConfig._map_reasoning_effort(
+            mapped_thinking = AnthropicConfig._map_reasoning_effort(
                 reasoning_effort=reasoning_effort, model=model
             )
+            if mapped_thinking is None:
+                optional_params.pop("thinking", None)
+            else:
+                optional_params["thinking"] = mapped_thinking
 
     @staticmethod
     def _clamp_thinking_budget_tokens(optional_params: dict) -> None:
@@ -1942,8 +1946,8 @@ class AmazonConverseConfig(BaseConfig):
             completion_response = ConverseResponseBlock(**response.json())  # type: ignore
         except Exception as e:
             raise BedrockError(
-                message="Received={}, Error converting to valid response block={}. File an issue if litellm error - https://github.com/BerriAI/litellm/issues".format(
-                    response.text, str(e)
+                message="Error converting to valid response block={}. File an issue if litellm error - https://github.com/BerriAI/litellm/issues".format(
+                    str(e)
                 ),
                 status_code=422,
             )
